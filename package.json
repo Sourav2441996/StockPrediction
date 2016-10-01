@@ -4,7 +4,7 @@
   "description": "",
   "main": "predictStock.js",
   "scripts": {
-   "start": "node ./interEx.js"
+   "start": "node ./serverInterEx.js"
   },
   "repository": {
     "type": "git",

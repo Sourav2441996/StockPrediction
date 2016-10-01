@@ -1,4 +1,6 @@
 var http = require('http');
+var _ = require('lodash');
+
 var necessaryFunctions = new Object();
 necessaryFunctions.requestToApi = function(apiFunctions){
     if (apiFunctions.apiCall === 'orders'){
@@ -105,6 +107,72 @@ necessaryFunctions.buyStock = function(exchange, symbol, qty, type){
                                 "order_type":"market"}
             });
 };
+
+necessaryFunctions.getMinAsync = function (exchangeData, callback) {
+    var min1 = Number.MAX_VALUE;
+    var qty1;
+    
+    _.forEach(exchangeData.buy, function (val, key) {
+        key = parseFloat(key);
+        val = parseFloat(val);
+        if (key <= min1) {
+            min1 = key;
+            qty1 = val;
+        }
+    });
+    var data = {
+        'buy': {
+            "price1": min1,
+            "qty1": qty1,
+        },
+        'exchange': exchangeData.exchange
+    };
+    callback(data);
+}
+
+necessaryFunctions.getMinSync = function(exchangeData, callback){
+    var stockData = [];
+    _.forEach(exchangeData, function(eachExchangeData){
+        necessaryFunctions.getMinAsync(eachExchangeData, function(data){
+            // console.log("On exchange: "+ data.exchange);
+            stockData.push(data);
+            if(stockData.length == 3) return callback(stockData);
+        });
+    });
+}
+
+necessaryFunctions.getMaxAsync = function (exchangeData, callback) {
+    var max1 = Number.MIN_VALUE; 
+    var qty1; var qty2;
+    
+    _.forEach(exchangeData.buy, function (val, key) {
+        key = parseFloat(key);
+        val = parseFloat(val);
+        if (key >= max1) {
+            max1 = key;
+            qty1 = val;
+        }
+    });
+    var data = {
+        'sell': {
+            "price1": max1,
+            "qty1": qty1,
+        },
+        'exchange': exchangeData.exchange
+    };
+    callback(data);
+}
+
+necessaryFunctions.getMaxSync = function(exchangeData, callback){
+    var stockData = [];
+    _.forEach(exchangeData, function(eachExchangeData){
+        necessaryFunctions.getMaxAsync(eachExchangeData, function(data){
+            // console.log("On exchange: "+ data.exchange);
+            stockData.push(data);
+            if(stockData.length == 3) return callback(stockData);
+        });
+    });
+}
 
 necessaryFunctions.getMarketDataAsync = function(exchange, symbol, callback){
     var options = {

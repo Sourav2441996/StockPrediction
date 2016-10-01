@@ -43,14 +43,40 @@ function requestToApi(apiFunctions){
     }
 }
 
+function getMax(exchangeDataForSymbol){
+	var max1 = Number.MIN_VALUE; var max2 = Number.MIN_VALUE; 
+	var qty1; var qty2;
+	_.forEach(exchangeDataForSymbol, function(eachExchangeData){
+		_.forEach(eachExchangeData.buy, function(val, key){
+			key = parseFloat(key);
+			val = parseFloat(val);
+			if(key >= max1){
+				max2 = max1;
+				qty2 = qty1;
+				max1 = key;
+				qty1 = val;
+			} else if (key>= max2){
+				max2 = key;
+				qty2 = val;
+			}
+		});
 
-
+	});
+	var data = {
+			'buy':{
+				"price1": max1,
+				"qty1": qty1,
+				"price2": max2,
+				"qty2": qty2
+			}
+	};
+	return data;
+}
 
 function getMin(exchangeDataForSymbol){
-	var excTwoHiLos = [];
+	var min1 = Number.MAX_VALUE; var min2 = Number.MAX_VALUE; 
+	var qty1; var qty2;
 	_.forEach(exchangeDataForSymbol, function(eachExchangeData){
-		var min1 = Number.MAX_VALUE; var min2 = Number.MAX_VALUE; 
-		var qty1; var qty2;
 		_.forEach(eachExchangeData.buy, function(val, key){
 			key = parseFloat(key);
 			val = parseFloat(val);
@@ -59,22 +85,22 @@ function getMin(exchangeDataForSymbol){
 				qty2 = qty1;
 				min1 = key;
 				qty1 = val;
+			} else if (key<= min2){
+				min2 = key;
+				qty2 = val;
 			}
 		});
 
-		min1 = min1.toString();
-		min2 = min2.toString();
-		var data = {
+	});
+	var data = {
 			'buy':{
-				"min1": min1,
+				"price1": min1,
 				"qty1": qty1,
-				"min2": min2,
+				"price2": min2,
 				"qty2": qty2
 			}
-		};
-		excTwoHiLos.push(data);
-	});
-	return excTwoHiLos;
+	};
+	return data;
 }
 
 while(true){
@@ -100,7 +126,9 @@ var stockJSONex3 = requestToApi({
 var stockData = [stockJSONex1, stockJSONex2, stockJSONex3];
 
 
+console.log(stockData);
 console.log(getMin(stockData));
+console.log(getMax(stockData));
 return;
 
 //console.log("Session: %j", _.toPairs(stockJSONex1.buy));

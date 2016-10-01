@@ -6,9 +6,14 @@ callback = function(response){
     // Continuously update stream with data
     console.log("Test", response);
 }
-const PORT=process.env.PORT; 
+const PORT = process.env.PORT; 
 const TEAM_UID="PkkYempGWJeQr3AFYzcOWA";
 
+function handleRequest(request, response){
+    response.end('It Works!! Path Hit: ' + request.url);
+}
+
+var server = http.createServer(handleRequest);
 
 server.listen(PORT, function(){
 	function requestToApi(apiFunctions){

@@ -132,6 +132,7 @@ necessaryFunctions.getAllMarketDataSync =function(symbol, callback) {
     var stockData = [];
     for(var i = 1; i< 4; i++){
         necessaryFunctions.getMarketDataAsync(i, symbol, function(data){
+            // console.log("On exchange: "+ data.exchange);
             stockData.push(data);
             if(stockData.length == 3) return callback(stockData);
         });

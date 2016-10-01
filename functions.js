@@ -1,5 +1,9 @@
 var http = require('http');
 var necessaryFunctions = new Object();
+var syncRequest = require('sync-request');
+
+const TEAM_UID = "TtH8CwcTEcwcpP7BOoZBzg";
+
 necessaryFunctions.requestToApi = function(apiFunctions){
     if (apiFunctions.apiCall === 'orders'){
 

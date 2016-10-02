@@ -190,10 +190,20 @@ necessaryFunctions.getMarketDataAsync = function(exchange, symbol, callback){
             data+= chunk;
         });
         response.on('end', function(){
-            data = JSON.parse(data);
-            data.exchange = exchange;
-            callback(data);
+            if (response) {
+                try {
+                    data = JSON.parse(data);
+                    data.exchange = exchange;
+                    callback(data);
+                } catch (e) {
+                    console.log("Server Down:", exchange);
+                }
+            }
+
         });
+        response.on('error', function(){
+            console.log("Server Down", exchange);
+        })
     };
 
     http.get(options, httpCallback).end();

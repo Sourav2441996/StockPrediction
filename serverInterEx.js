@@ -1,6 +1,11 @@
 var _ = require('lodash');
 var http = require('http');
 var syncRequest = require('sync-request');
+var getAllFunctions = require('./functions.js');
+var requestToApi = require('./functions.js').requestToApi;
+
+const TEAM_UID = "TtH8CwcTEcwcpP7BOoZBzg";
+var symbol = "0005";
 
 callback = function(response){
     // Continuously update stream with data
@@ -16,178 +21,78 @@ function handleRequest(request, response){
 var server = http.createServer(handleRequest);
 
 server.listen(PORT, function(){
-	function requestToApi(apiFunctions){
-		if (apiFunctions.apiCall === 'orders'){
-
-			apiFunctions.orderTicket.team_uid = TEAM_UID;
-			apiFunctions.orderTicket.symbol = apiFunctions.symbol;
-
-			var request = syncRequest(
-				'POST',
-				'http://cis2016-'+apiFunctions.exchange+'.herokuapp.com/api/'+apiFunctions.apiCall,
-				{
-					'headers': {
-						'Content-Type': 'application/json'
-					},
-					'json': apiFunctions.orderTicket
-				}
-			);
-
-			return JSON.parse(request.getBody());
-
-		} else {
-			if (apiFunctions.symbol) {
-				apiFunctions.apiCall = apiFunctions.apiCall+'/'+apiFunctions.symbol;
-			}
-
-			var request = syncRequest(
-				'GET',
-				'http://cis2016-'+apiFunctions.exchange+'.herokuapp.com/api/'+apiFunctions.apiCall
-			);
-
-			return JSON.parse(request.getBody());
-
-		}
+	function main(callback){
+			getAllFunctions.getAllMarketDataSync('0388', function(data){
+			finalMinMax = [];
+			getAllFunctions.getMinSync(data, function(minData){
+				//console.log("Buy", minData);
+				var test = _.minBy(minData, function(o) { return 'o.buy.price1'; });
+				finalMinMax.push(test);
+			});
+			getAllFunctions.getMaxSync(data, function(maxData){
+				//console.log("Sell", maxData);
+				var test = _.maxBy(maxData, function(o) { return 'o.sell.price1'; });
+				finalMinMax.push(test);
+			});
+			callback(finalMinMax);
+		});
 	}
-	var symbol = "0388";
 
-	while(true){
-		var stockJSONex1 = requestToApi({
-		'apiCall':'market_data',
-		'symbol': symbol,
-		'exchange': 'exchange1'
-		});
+	(function repeat(){
+		main(function(res)
+		{	
+			console.log(res);
+			var minQ = res[0].buy.qty1;
+			var maxQ = res[1].sell.qty1;
+			var minPrice = res[0].buy.price1;
+			var maxPrice = res[1].sell.price1;
+			var buyEx = res[0].exchange;
+			var sellEx = res[1].exchange;
 
-		var stockJSONex2 = requestToApi({
-		'apiCall':'market_data',
-		'symbol': symbol,
-		'exchange': 'exchange2'
-		});
-
-		var stockJSONex3 = requestToApi({
-		'apiCall':'market_data',
-		'symbol': symbol,
-		'exchange': 'exchange3'
-		});
-
-
-		var stockData = [stockJSONex1, stockJSONex2, stockJSONex3];
-
-		//console.log("Session: %j", _.toPairs(stockJSONex1.buy));
-		//console.log(stockData);
-
-		var minPrice = 10000000;
-		var exchangeOfMin = 4;
-
-		var i = 1;
-		_.forEach(stockData, function(value) {
-			//console.log("Sell: %j\n", value.sell);
-			var min = 10000000;
-			_.forEach(value.sell, function(key, val){
-				if(parseFloat(val) < min){
-					min = parseFloat(val);
-				}
-			});
-
-			if(min < parseFloat(minPrice)){
-				minPrice = min;
-				exchangeOfMin = i;
+			if(maxQ > minQ){
+				var quantity = minQ;
+			}else{
+				var quantity = maxQ;
 			}
-			i++;
-		});
-
-		// console.log(minPrice);
-		// console.log(stockData[exchangeOfMin-1].sell[minPrice]);
-		// console.log(exchangeOfMin);
-
-		var maxPrice = -10;
-		var exchangeOfMax = 4;
-		var i = 1;
-
-		_.forEach(stockData, function(value) {
-			//console.log("Buy: %j\n", value.buy);
-			var max = -10;
-			_.forEach(value.buy, function(key, val){
-				if(parseFloat(val) > max){
-					max = parseFloat(val);
-				}
-			});
-
-			if(max > parseFloat(maxPrice)){
-				maxPrice = max;
-				exchangeOfMax = i;
-			}
-			i++;
-		});
-
-		// console.log(maxPrice);
-		// console.log(stockData[exchangeOfMax-1].buy[maxPrice]);
-		// console.log(exchangeOfMax);
-
-		if( stockData[exchangeOfMax-1].buy[maxPrice] > stockData[exchangeOfMin-1].sell[minPrice]){
-			var quantity = stockData[exchangeOfMin-1].sell[minPrice];
-		}else{
-			var quantity = stockData[exchangeOfMax-1].buy[maxPrice];
-		}
-
-		if(parseFloat(maxPrice) > parseFloat(minPrice) && quantity != null){
-			console.log("Buy "+quantity+ " at $"+minPrice+" from exchange "+ exchangeOfMin +" and sell to " + exchangeOfMax+" sell at $" + maxPrice );
-
-			var output = requestToApi({
-				'apiCall':'orders',
-				'symbol': symbol,
-				'exchange': 'exchange'+exchangeOfMin,
-				'orderTicket': {"side": "buy",
-								"qty":quantity,
-								"order_type":"market"}
-			});
 			
-			//console.log(output);
-			
-			var buy = 0;
-			_.forEach(output.fills, function(value) {
-				buy = buy + (value.price * value.qty);
-			});
-			
-			if(output.filled_qty > 0){
-				var output2 = requestToApi({
+			if((maxPrice) < (minPrice) && quantity != null && quantity > 0){
+				console.log("Buy "+quantity+ " at $"+minPrice+" from exchange "+ buyEx +" and sell to " + sellEx+" sell at $" + maxPrice );
+
+				 var output = requestToApi({
 					'apiCall':'orders',
 					'symbol': symbol,
-					'exchange': 'exchange'+exchangeOfMax,
-					'orderTicket': {"side": "sell",
-									"qty":output.filled_qty,
+					'exchange': 'exchange'+buyEx,
+					'orderTicket': {"side": "buy",
+									"qty":quantity,
 									"order_type":"market"}
 				});
-			}
-
-			//console.log(output2);
-			var sell = 0;
-			_.forEach(output2.fills, function(value) {
-				sell = sell + (value.price * value.qty);
-			});
+				
+				console.log(output);
+				
+				/* var buy = 0;
+				_.forEach(output.fills, function(value) {
+					buy = buy + (value.price * value.qty);
+				}); */
+				 
 			
-			console.log("Profit:" + (sell - buy));
-		}
-	}
+				 var output2 = requestToApi({
+					'apiCall':'orders',
+					'symbol': symbol,
+					'exchange': 'exchange'+sellEx,
+					'orderTicket': {"side": "sell",
+									"qty":quantity,
+									"order_type":"market"}
+				});
+				
+				console.log(output2);
+				/* 	var sell = 0;
+				_.forEach(output2.fills, function(value) {
+					sell = sell + (value.price * value.qty);
+				});
+				
+				console.log("Profit:" + (sell - buy)); */
+			}
+			repeat();
+		});
+	})();
 });
-/* { id: 'e360ce8e-450e-4308-a885-6dd3d7729ef0',
-  team_uid: 'PkkYempGWJeQr3AFYzcOWA',
-  symbol: '0005',
-  side: 'buy',
-  qty: 1400,
-  order_type: 'market',
-  price: null,
-  status: 'FILLED',
-  filled_qty: 1400,
-  fills: [ { price: 77.05, qty: 1400 } ] }
-{ id: '843f2f0a-f219-482b-aea1-c5f98cea55bc',
-  team_uid: 'PkkYempGWJeQr3AFYzcOWA',
-  symbol: '0005',
-  side: 'sell',
-  qty: 1400,
-  order_type: 'market',
-  price: null,
-  status: 'FILLED',
-  filled_qty: 1400,
-  fills: [ { price: 77.15, qty: 1400 } ] } */
- 

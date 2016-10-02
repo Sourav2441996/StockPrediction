@@ -147,9 +147,8 @@ necessaryFunctions.getMinSync = function(exchangeData, callback){
 
 necessaryFunctions.getMaxAsync = function (exchangeData, callback) {
     var max1 = Number.MIN_VALUE; 
-    var qty1; var qty2;
-    
-    _.forEach(exchangeData.buy, function (val, key) {
+    var qty1;
+    _.forEach(exchangeData.sell, function (val, key) {
         key = parseFloat(key);
         val = parseFloat(val);
         if (key >= max1) {
@@ -212,4 +211,3 @@ necessaryFunctions.getAllMarketDataSync =function(symbol, callback) {
 };
 
 module.exports =  necessaryFunctions;
-

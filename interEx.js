@@ -2,7 +2,6 @@ var _ = require('lodash');
 var http = require('http');
 var syncRequest = require('sync-request');
 var getAllFunctions = require('./functions.js');
-
 var requestToApi = require('./functions.js').requestToApi;
 
 const TEAM_UID = "TtH8CwcTEcwcpP7BOoZBzg";
@@ -43,43 +42,42 @@ function main(callback){
 		}
 		
 		if((maxPrice) < (minPrice) && quantity != null && quantity > 0){
-				console.log("Buy "+quantity+ " at $"+minPrice+" from exchange "+ buyEx +" and sell to " + sellEx+" sell at $" + maxPrice );
+			console.log("Buy "+quantity+ " at $"+minPrice+" from exchange "+ buyEx +" and sell to " + sellEx+" sell at $" + maxPrice );
 
-				 var output = requestToApi({
-					'apiCall':'orders',
-					'symbol': symbol,
-					'exchange': 'exchange'+buyEx,
-					'orderTicket': {"side": "buy",
-									"qty":quantity,
-									"order_type":"market"}
-				});
-				
-				console.log(output);
-				
-				/* var buy = 0;
-				_.forEach(output.fills, function(value) {
-					buy = buy + (value.price * value.qty);
-				}); */
-				 
+			 var output = requestToApi({
+				'apiCall':'orders',
+				'symbol': symbol,
+				'exchange': 'exchange'+buyEx,
+				'orderTicket': {"side": "buy",
+								"qty":quantity,
+								"order_type":"market"}
+			});
 			
-				 var output2 = requestToApi({
-					'apiCall':'orders',
-					'symbol': symbol,
-					'exchange': 'exchange'+sellEx,
-					'orderTicket': {"side": "sell",
-									"qty":quantity,
-									"order_type":"market"}
-				});
-				
-				console.log(output2);
-				/* 	var sell = 0;
-				_.forEach(output2.fills, function(value) {
-					sell = sell + (value.price * value.qty);
-				});
-				
-				console.log("Profit:" + (sell - buy)); */
+			console.log(output);
+			
+			/* var buy = 0;
+			_.forEach(output.fills, function(value) {
+				buy = buy + (value.price * value.qty);
+			}); */
+			 
+		
+			 var output2 = requestToApi({
+				'apiCall':'orders',
+				'symbol': symbol,
+				'exchange': 'exchange'+sellEx,
+				'orderTicket': {"side": "sell",
+								"qty":quantity,
+								"order_type":"market"}
+			});
+			
+			console.log(output2);
+			/* 	var sell = 0;
+			_.forEach(output2.fills, function(value) {
+				sell = sell + (value.price * value.qty);
+			});
+			
+			console.log("Profit:" + (sell - buy)); */
 		}
 		repeat();
-			
 	});
 })();

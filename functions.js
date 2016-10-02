@@ -40,55 +40,55 @@ necessaryFunctions.requestToApi = function(apiFunctions){
     }
 };
 
-necessaryFunctions.getMax= function(exchangeDataForSymbol){
-    var max1 = Number.MIN_VALUE; var max2 = Number.MIN_VALUE; 
-    var qty1; var qty2;
-    _.forEach(exchangeDataForSymbol, function(eachExchangeData){
-        _.forEach(eachExchangeData.buy, function(val, key){
-            key = parseFloat(key);
-            val = parseFloat(val);
-            if(key >= max1){
-                max2 = max1;
-                qty2 = qty1;
-                max1 = key;
-                qty1 = val;
-            } else if (key>= max2){
-                max2 = key;
-                qty2 = val;
-            }
-        });
+// necessaryFunctions.getMax= function(exchangeDataForSymbol){
+//     var max1 = Number.MIN_VALUE; var max2 = Number.MIN_VALUE; 
+//     var qty1; var qty2;
+//     _.forEach(exchangeDataForSymbol, function(eachExchangeData){
+//         _.forEach(eachExchangeData.buy, function(val, key){
+//             key = parseFloat(key);
+//             val = parseFloat(val);
+//             if(key >= max1){
+//                 max2 = max1;
+//                 qty2 = qty1;
+//                 max1 = key;
+//                 qty1 = val;
+//             } else if (key>= max2){
+//                 max2 = key;
+//                 qty2 = val;
+//             }
+//         });
 
-    });
-    var data = {
-            'buy':{
-                "price1": max1,
-                "qty1": qty1,
-                "price2": max2,
-                "qty2": qty2
-            }
-    };
-    return data;
-}
+//     });
+//     var data = {
+//             'buy':{
+//                 "price1": max1,
+//                 "qty1": qty1,
+//                 "price2": max2,
+//                 "qty2": qty2
+//             }
+//     };
+//     return data;
+// }
 
-necessaryFunctions.getMin= function(exchangeDataForSymbol){
-    var min1 = Number.MAX_VALUE; var min2 = Number.MAX_VALUE; 
-    var qty1; var qty2;
-    _.forEach(exchangeDataForSymbol, function(eachExchangeData){
-        _.forEach(eachExchangeData.buy, function(val, key){
-            key = parseFloat(key);
-            val = parseFloat(val);
-            if(key <= min1){
-                min2 = min1;
-                qty2 = qty1;
-                min1 = key;
-                qty1 = val;
-            } else if (key<= min2){
-                min2 = key;
-                qty2 = val;
-            }
-        });
-    });
-};
+// necessaryFunctions.getMin= function(exchangeDataForSymbol){
+//     var min1 = Number.MAX_VALUE; var min2 = Number.MAX_VALUE; 
+//     var qty1; var qty2;
+//     _.forEach(exchangeDataForSymbol, function(eachExchangeData){
+//         _.forEach(eachExchangeData.buy, function(val, key){
+//             key = parseFloat(key);
+//             val = parseFloat(val);
+//             if(key <= min1){
+//                 min2 = min1;
+//                 qty2 = qty1;
+//                 min1 = key;
+//                 qty1 = val;
+//             } else if (key<= min2){
+//                 min2 = key;
+//                 qty2 = val;
+//             }
+//         });
+//     });
+// };
 
 necessaryFunctions.sellStock = function(exchange, symbol, qty, type){
     var output = requestToApi({
@@ -181,6 +181,7 @@ necessaryFunctions.getMarketDataAsync = function(exchange, symbol, callback){
     var options = {
         'host': 'cis2016-exchange'+exchange+'.herokuapp.com',
         'path': '/api/market_data/'+symbol,
+        'method': 'GET'
     };
 
 
@@ -205,8 +206,22 @@ necessaryFunctions.getMarketDataAsync = function(exchange, symbol, callback){
             console.log("Server Down", exchange);
         })
     };
-
-    http.get(options, httpCallback).end();
+    var timeOutCallback = function(){
+        var data = {
+            "symbol": symbol,
+            "buy": {
+                "1000000": 0
+            },
+            "sell":{
+                "-1000000":0
+            },
+            "exchange": NULL
+        };
+        callback(data);
+    }
+   var request = http.request(options, httpCallback)
+    request.setTimeout(10000, timeOutCallback);
+    request.end();
 }
 
 necessaryFunctions.getAllMarketDataSync =function(symbol, callback) {
